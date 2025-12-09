@@ -12,7 +12,6 @@ Educational goals:
 - Uses real‑time 3D rendering to simulate a training range with dynamic targets
 - Pointer‑lock controls, physics‑like motion, collision checks, spatial audio
 - Structured difficulty tiers that scaffold learning from fundamentals to mastery
-- Designed for future WebXR integration to extend to VR headsets
 
 ## Features
 - Three difficulty modes with tuned target count, speed, and timing
@@ -30,17 +29,20 @@ Full‑stack, modular design with clear separation of concerns:
   - `src/levels/*.js`: difficulty configs (Beginner/Intermediate/Professional)
   - `index.html` + `public/*`: static assets (textures, model, audio, CSS)
 - Backend (Express)
-  - `server/index.js`: auth, score APIs, cookie/JWT handling, CORS
-  - `server/db.js`: PostgreSQL pool, schema init, queries, upsert best scores
-- Database (PostgreSQL)
+   Folder renamed from server → api
+  - `api/index.js`: auth, score APIs, cookie/JWT handling, CORS
+  - `api/db.js`: Neon PostgreSQL pool, schema init, queries, upsert best scores
+- Database (Neon PostgreSQL)
   - `users`: identity and password hash
   - `user_scores`: best score per difficulty with constraints and indices
 
 Runtime topology:
 ```
-Browser (Vite dev server 5173) ── proxy /api ──► Express (3001) ──► PostgreSQL
-         Three.js scene & UI                Auth & Scores      users, user_scores
+
+Browser (Vite 5173) ── proxy /api ──► Express API (3001) ──► Neon PostgreSQL
+         Three.js game                      Auth & Scores      users, user_scores
 ```
+
 
 ## Schemas
 CREATE TABLE IF NOT EXISTS public.users (
@@ -63,6 +65,8 @@ CREATE TABLE public.user_scores (
     PRIMARY KEY (user_id, mode)
 );
 
+UTILITY QUERIES:
+
 SELECT * FROM public.users;
 
 SELECT * FROM public.user_scores;
@@ -74,24 +78,24 @@ TRUNCATE TABLE public.users RESTART IDENTITY CASCADE;
 ## Development Stack
 - Frontend: Vite, Three.js, PointerLockControls, GLTFLoader
 - Backend: Express, CORS, cookie‑parser, bcrypt, jsonwebtoken
-- Database: PostgreSQL (`pg`), schema migrations at startup
+- Database:Neon PostgreSQL (via pg node client)
 - Configuration: `.env` via `dotenv`
 - Testing: Vitest (unit), Supertest (API)
 
 ## Setup & Installation
 Prerequisites:
 - `Node.js` 18+
-- `PostgreSQL` 13+
+- Neon PostgreSQL database (cloud or local compatible)
 
 Steps:
-1. Create database: `The-Range-1`
+1. Create database: `The-Range-DB`
 2. Copy or edit `.env`:
-   - `PGHOST=localhost`
+   - `PGHOST=ep-divine-hill-a1ym9h6z-pooler.ap-southeast-1.aws.neon.tech`
    - `PGPORT=5432`
-   - `PGDATABASE=The-Range-1`
-   - `PGUSER=postgres`
-   - `PGPASSWORD=your_password`
-   - Optional: `JWT_SECRET=change-me-in-prod`
+   - `PGDATABASE=neondb`
+   - `PGUSER=neon-username`
+   - `PGPASSWORD=your-neon-password`
+   - `JWT_SECRET=change-me-in-prod`
 3. Install dependencies:
    - `npm install`
 4. Start backend:
@@ -104,7 +108,7 @@ Steps:
 ## API Overview
 - `POST /api/auth/signup` → create account (server‑side validation)
 - `POST /api/auth/login` → set `auth_token` http‑only cookie
-- `POST /api/auth/logout` → clear cookie
+- `POST /api/auth/logout` → clears cookie
 - `GET /api/auth/me` → current user from JWT
 - `GET /api/scores/me` → best scores for authenticated user
 - `POST /api/scores/update` → upsert best score per difficulty
@@ -112,7 +116,7 @@ Steps:
 ## Team Roles
 - Prince Johnard Gonzales (Backend & Database)
 
-- Responsibilities: Express server architecture, API endpoint creation, PostgreSQL database schema design, authentication (JWT/Bcrypt), API security, and server-side testing
+- Responsibilities: Express API architecture, API endpoint creation, Neon PostgreSQL schema design, queries, and optimizations, authentication (JWT/Bcrypt), API security, and server-side testing
 
 Ryan Ranada (Frontend & 3D Lead)
 
@@ -123,7 +127,3 @@ Ryan Ranada (Frontend & 3D Lead)
 - JWT in secure, http‑only cookie with limited lifetime
 - Parameterized queries and transaction use for schema init
 - CORS and proxy separation between client and server
-
-
-
-
