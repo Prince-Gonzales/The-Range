@@ -9,11 +9,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod';
 
-app.use(express.json());
-app.use(cookieParser());
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173', 
+      'https://the-range-one.vercel.app', // Your main production domain
+      /\.vercel\.app$/ // Allow any Vercel preview deployment
+    ],
     credentials: true,
   })
 );
@@ -137,6 +139,7 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-export { app, server };
 
-module.exports = app;
+// Export for Vercel Serverless
+export default app;
+export { app, server };
