@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "server": "node server/index.js",
-    "test": "vitest run --exclude tests/** --environment jsdom"
-  },
+  "dev": "vite",
+  "build": "vite build",
+  "vercel-build": "vite build",
+  "preview": "vite preview",
+  "server": "node server/index.js"
+},
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
