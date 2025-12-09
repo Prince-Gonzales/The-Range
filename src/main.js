@@ -189,7 +189,18 @@ const gunURL = new URL('/models/gun.glb', import.meta.url).href;
 
 gltfLoader.load(gunURL, (gltf) => {
     gun = gltf.scene;
-    scene.add(gun);
+    const box = new THREE.Box3().setFromObject(gun);
+    const center = box.getCenter(new THREE.Vector3());
+    gun.position.sub(center);
+    
+    const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z);
+    if (maxDim > 0) {
+        gun.scale.multiplyScalar(1.0 / maxDim);
+    }
+
+    camera.add(gun);
+    gun.position.set(0.5, -0.8, -1.0);
+    gun.rotation.set(0, Math.PI, 0);
 }, undefined, (err) => {
         console.error('Gun load error:', err);
         const geometry = new THREE.BoxGeometry(0.3, 0.1, 0.5);
