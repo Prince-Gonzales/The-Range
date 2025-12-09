@@ -142,4 +142,3 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Export for Vercel Serverless
 export default app;
-export { app, server };
