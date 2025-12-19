@@ -32,10 +32,24 @@ uiManager.hideLevelSelector();
 
 // Initialize auth and show level selector on login
 const auth = new AuthManager();
-document.addEventListener('auth:login', async () => {
+document.addEventListener('auth:login', async (e) => {
+    const user = e.detail?.user;
+    if (user) {
+        window.currentUsername = user.username;
+    }
     uiManager.showLevelSelector();
     const scores = await fetchHighScores();
     uiManager.updateHighScores(scores);
+});
+
+// Listen for leaderboard button click
+document.addEventListener('leaderboard:open', () => {
+    uiManager.showLeaderboard(null, window.currentUsername || null);
+});
+
+// Listen for leaderboard close event
+document.addEventListener('leaderboard:close', () => {
+    uiManager.hideLeaderboard();
 });
 
 // THEN set up the levels and update UI
@@ -307,7 +321,7 @@ async function endGame() {
         difficulty: key,
         difficultyName: gameState.currentLevel.name,
         achievements,
-    });
+    }, key, window.currentUsername || null);
 }
 
 function formatTime(seconds) {
@@ -375,6 +389,27 @@ controls.addEventListener('unlock', async () => {
         await submitBestScore(key, gameState.score);
         const latest = await fetchHighScores();
         uiManager.updateHighScores(latest);
+        // Show post-game summary and leaderboard
+        const totalShots = gameState.shotsFired;
+        const acc = totalShots ? (gameState.hits / totalShots) * 100 : 0;
+        const misses = Math.max(0, totalShots - gameState.hits);
+        const timePlayed = Math.max(0, (gameState.currentLevel.gameTime - gameState.timeLeft));
+        const achievements = [];
+        if (acc >= 90 && totalShots >= 10) achievements.push('Sharpshooter');
+        if (misses === 0 && totalShots > 0) achievements.push('Flawless');
+        if (gameState.score >= 20) achievements.push('High Scorer');
+        uiManager.showPostGameSummary({
+            reason: 'unlock',
+            score: gameState.score,
+            accuracy: acc,
+            hits: gameState.hits,
+            misses,
+            totalShots,
+            timePlayed,
+            difficulty: key,
+            difficultyName: gameState.currentLevel.name,
+            achievements,
+        }, key, window.currentUsername || null);
     }
 });
 
@@ -529,7 +564,7 @@ async function handleCollision(target) {
         difficulty: gameState.currentLevelKey,
         difficultyName: gameState.currentLevel.name,
         achievements,
-    });
+    }, key, window.currentUsername || null);
     
     // Visual feedback - make the hitting target red
     target.mesh.material.color.set(0xff0000);
@@ -542,16 +577,6 @@ renderer.setAnimationLoop(animate);
     gameState.isPlaying = true;
 });
 */
-controls.addEventListener('unlock', () => {
-    if (gameState.isPlaying) {
-        gameState.isPlaying = false;
-        uiManager.hideCrosshair();
-        uiManager.showLevelSelector();
-        auth.showHeader();
-        document.body.classList.remove('playing');
-        uiManager.hideGameHeader();
-    }
-});
 async function fetchHighScores() {
     try {
         const res = await fetch('/api/scores/me', { credentials: 'include' });
@@ -565,12 +590,23 @@ async function fetchHighScores() {
 
 async function submitBestScore(mode, score) {
     try {
-        await fetch('/api/scores/update', {
+        const res = await fetch('/api/scores/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mode, score }),
             credentials: 'include',
         });
+        
+        if (res.ok) {
+            const data = await res.json();
+            // Update leaderboard for this mode
+            await uiManager.updateLeaderboard(mode);
+            
+            // Show notification if this is the highest score
+            if (data.isHighestScore) {
+                uiManager.showToast(`🏆 New Highest Score! You're #1 in ${mode.charAt(0).toUpperCase() + mode.slice(1)}!`, 'success');
+            }
+        }
     } catch {}
 }
 

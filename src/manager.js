@@ -11,6 +11,7 @@ stays clean while the UI updates automatically and consistently.
 
 import * as THREE from 'three';
 import { PostGameSummary } from './components/PostGameSummary.js';
+import { LeaderboardOverlay } from './components/LeaderboardOverlay.js';
 
 export class UIManager {
     constructor() {
@@ -20,6 +21,7 @@ export class UIManager {
         this.levels = {}; // Initialize empty levels
         this.createUI();
         this.createPostGameSummary();
+        this.createLeaderboardOverlay();
         this.setupLoadingManager();
     }
 
@@ -101,6 +103,10 @@ export class UIManager {
 
     createPostGameSummary() {
         this.postSummary = new PostGameSummary();
+    }
+
+    createLeaderboardOverlay() {
+        this.leaderboardOverlay = new LeaderboardOverlay();
     }
 
     // Add this method to update level info after levels are loaded
@@ -289,11 +295,24 @@ export class UIManager {
         if (p) p.textContent = String(scores.professional || 0);
     }
 
-    showPostGameSummary(stats) {
-        if (this.postSummary) this.postSummary.show(stats);
+    showPostGameSummary(stats, mode = null, currentUsername = null) {
+        if (this.postSummary) this.postSummary.show(stats, mode, currentUsername);
     }
 
     hidePostGameSummary() {
         if (this.postSummary) this.postSummary.hide();
     }
+
+    showLeaderboard(mode = null, currentUsername = null) {
+        if (this.leaderboardOverlay) {
+            this.leaderboardOverlay.show(mode, currentUsername);
+        }
+    }
+
+    hideLeaderboard() {
+        if (this.leaderboardOverlay) {
+            this.leaderboardOverlay.hide();
+        }
+    }
+
 }
