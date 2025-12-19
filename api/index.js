@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { initSchema, getUserByUsername, createUser, upsertBestScore, getUserScores } from './db.js';
+import { initSchema, getUserByUsername, createUser, upsertBestScore, getUserScores, getLeaderboard, getTopScore } from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -148,10 +148,57 @@ app.post('/api/scores/update', authMiddleware, async (req, res) => {
   if (!Number.isFinite(numericScore) || numericScore < 0) return res.status(400).json({ error: 'Invalid score' });
   
   try {
+    // Get top score before update to check if this is a new record
+    const topScoreBefore = await getTopScore(mode);
     const result = await upsertBestScore(req.user.id, req.user.username, mode, numericScore);
-    return res.json({ bestScore: result.best_score });
+    const topScoreAfter = await getTopScore(mode);
+    
+    // Check if this user achieved the highest score
+    const isHighest = numericScore >= topScoreAfter && numericScore > topScoreBefore;
+    
+    return res.json({ 
+      bestScore: result.best_score,
+      isHighestScore: isHighest,
+      previousTopScore: topScoreBefore
+    });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to update score' });
+  }
+});
+
+// Leaderboard API - no auth required, but only shows authenticated users
+app.get('/api/leaderboard/:mode', async (req, res) => {
+  const { mode } = req.params;
+  const validModes = ['beginner', 'intermediate', 'professional'];
+  if (!validModes.includes(mode)) return res.status(400).json({ error: 'Invalid mode' });
+  
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const leaderboard = await getLeaderboard(mode, limit);
+    return res.json({ leaderboard, mode });
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    return res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+// Get leaderboard for all modes
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const [beginner, intermediate, professional] = await Promise.all([
+      getLeaderboard('beginner', limit),
+      getLeaderboard('intermediate', limit),
+      getLeaderboard('professional', limit)
+    ]);
+    return res.json({ 
+      beginner,
+      intermediate,
+      professional
+    });
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    return res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
 

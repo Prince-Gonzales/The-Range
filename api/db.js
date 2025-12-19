@@ -106,4 +106,47 @@ export async function getUserScores(userId) {
   return result;
 }
 
+export async function getLeaderboard(mode, limit = 10) {
+  // Normalize mode string to match database Check Constraint
+  const modeDb = mode.charAt(0).toUpperCase() + mode.slice(1).toLowerCase();
+  
+  const { rows } = await pool.query(
+    `SELECT 
+      us.username,
+      us.best_score,
+      us.updated_at,
+      u.first_name,
+      u.last_name
+    FROM user_scores us
+    INNER JOIN users u ON us.user_id = u.id
+    WHERE us.mode = $1
+    ORDER BY us.best_score DESC, us.updated_at ASC
+    LIMIT $2`,
+    [modeDb, limit]
+  );
+  
+  return rows.map((row, index) => ({
+    rank: index + 1,
+    username: row.username,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    score: row.best_score,
+    updatedAt: row.updated_at
+  }));
+}
+
+export async function getTopScore(mode) {
+  // Normalize mode string to match database Check Constraint
+  const modeDb = mode.charAt(0).toUpperCase() + mode.slice(1).toLowerCase();
+  
+  const { rows } = await pool.query(
+    `SELECT MAX(best_score) as top_score
+    FROM user_scores
+    WHERE mode = $1`,
+    [modeDb]
+  );
+  
+  return rows[0]?.top_score || 0;
+}
+
 export { pool };

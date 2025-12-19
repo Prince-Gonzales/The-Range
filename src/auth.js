@@ -23,6 +23,7 @@ export class AuthManager {
           <span class="brand-text">The Range</span>
         </div>
         <div class="user-area" id="user-area">
+          <button id="leaderboard-btn" class="link-btn leaderboard-btn" aria-label="View Leaderboard" style="display:none">🏆 Leaderboard</button>
           <div id="user-avatar" class="avatar" aria-hidden="true"></div>
           <span id="user-name" class="user-name"></span>
           <button id="logout-btn" class="link-btn" aria-label="Logout" style="display:none">Logout</button>
@@ -34,6 +35,7 @@ export class AuthManager {
     this.elements.userName = header.querySelector('#user-name');
     this.elements.logoutBtn = header.querySelector('#logout-btn');
     this.elements.userAvatar = header.querySelector('#user-avatar');
+    this.elements.leaderboardBtn = header.querySelector('#leaderboard-btn');
   }
 
   showHeader() {
@@ -148,6 +150,11 @@ export class AuthManager {
     this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
     this.elements.signupForm.addEventListener('submit', (e) => this.handleSignup(e));
     this.elements.logoutBtn.addEventListener('click', () => this.logout());
+    if (this.elements.leaderboardBtn) {
+      this.elements.leaderboardBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('leaderboard:open'));
+      });
+    }
 
     const sf = this.elements.signupForm;
     sf.username.addEventListener('input', () => {
@@ -342,6 +349,7 @@ export class AuthManager {
     this.user = user;
     this.elements.userName.textContent = user.username;
     this.elements.logoutBtn.style.display = 'inline-block';
+    if (this.elements.leaderboardBtn) this.elements.leaderboardBtn.style.display = 'inline-block';
     document.body.dataset.auth = 'authenticated';
     document.dispatchEvent(new CustomEvent('auth:login', { detail: { user } }));
     const initial = (user.username || '?').slice(0,1).toUpperCase();
@@ -465,7 +473,9 @@ export class AuthManager {
       this.user = null;
       this.elements.userName.textContent = '';
       this.elements.logoutBtn.style.display = 'none';
+      if (this.elements.leaderboardBtn) this.elements.leaderboardBtn.style.display = 'none';
       document.body.dataset.auth = 'anonymous';
+      window.currentUsername = null;
       this.showOverlay();
       document.dispatchEvent(new CustomEvent('auth:logout'));
     }
