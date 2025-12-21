@@ -112,13 +112,27 @@ This project relies on the following key technologies and libraries to function 
 - **cors (^2.8.5):** Enables cross-origin resource sharing between the frontend and backend.
 - **cookie-parser (^1.4.6):** Parses cookies for session authentication.
 
+
 ## Setup & Installation
 
 ### Prerequisites
 
-- `Node.js` 18+
-- Neon PostgreSQL database (cloud)
-- PostgreSQL pgAdmin4 (Local)
+### 1. Git
+Git is used for cloning the repository and managing version control.
+
+- **Download:** https://git-scm.com/downloads  
+- **Verification:**  
+  Run the following command in your terminal:
+  ```bash
+  git --version
+
+
+###  2. Node.js (Version 18+)
+The runtime environment required to run both the Vite frontend and Express backend.
+
+- **Download:** https://nodejs.org/en
+
+- **Verification:**   Run node -v and npm -v in your terminal.
 
 ## If cloning the repository
 
@@ -127,6 +141,11 @@ This project relies on the following key technologies and libraries to function 
 - Start the backend server and the frontend environment simultaneously in two separate terminals.
   - Terminal 1: `npm run server`
   - Terminal 2: `npm run dev`
+
+
+## Environment Configuration
+- Important Note on .env: If cloning this project, since the .env file is included in the repository, we recommend using the repository's provided .env file. It is already configured to connect to our live Neon PostgreSQL Database, allowing you to run the project immediately without setting up a local database.
+
 
 ### Steps for PostgreSQL pgAdmin4 (Local)
 
